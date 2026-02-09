@@ -68,6 +68,15 @@ npm install
 20. Leave room functionality ✅
 21. Code quality improvements ✅
 
+### Phase 5: Real-Time Chat (Planned)
+22. Floating chat widget UI
+23. Message list + input UI
+24. Real-time chat events (send/receive)
+25. Typing indicator
+26. Rate limiting (5 messages / 10 seconds)
+27. Message retention (last 100)
+28. Chat state persistence through restart
+
 ---
 
 ## 5. Testing (Completed)
@@ -81,6 +90,10 @@ Test Results:
 6. ✅ Restart game → roles swap correctly
 7. ✅ Opponent leaves → notification shown
 8. ✅ Leave waiting room → can join different code
+9. ⏳ Chat send/receive (real-time)
+10. ⏳ Typing indicator
+11. ⏳ Rate limit enforcement
+12. ⏳ Message retention (last 100)
 
 ---
 

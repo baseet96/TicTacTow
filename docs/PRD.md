@@ -53,6 +53,15 @@ Game ends when:
 - Either player can restart
 - Board resets
 
+#### 5.6 Real-Time Chat (In-room)
+- Players can chat while in a room (during and after game)
+- Chat closes when player leaves room
+- Floating chat icon expands into a panel
+- Supports text + emojis
+- Typing indicator shown for opponent
+- Keep last 100 messages in memory
+- Rate limit: 5 messages per 10 seconds per player
+
 ---
 
 ### 6. Functional Requirements
@@ -67,6 +76,11 @@ Game ends when:
 | FR6 | Detect win or draw |
 | FR7 | Restart game resets board |
 | FR8 | Room expires after 5 minutes of inactivity |
+| FR9 | Users can send/receive chat messages in real time |
+| FR10 | Typing indicator appears for opponent |
+| FR11 | Chat limited to last 100 messages in memory |
+| FR12 | Rate limit: 5 messages per 10 seconds |
+| FR13 | Chat only available while in room |
 
 ---
 
@@ -88,12 +102,20 @@ Client → Server:
 - join_room: { type: "join_room", roomCode: "1234" }
 - make_move: { type: "make_move", roomCode: "1234", position: 0 }
 - restart_game: { type: "restart_game", roomCode: "1234" }
+- leave_room: { type: "leave_room", roomCode: "1234" }
+- chat_message: { type: "chat_message", roomCode: "1234", text: "Hi" }
+- typing_start: { type: "typing_start", roomCode: "1234" }
+- typing_stop: { type: "typing_stop", roomCode: "1234" }
 
 Server → Client:
 - room_created: { type: "room_created", roomCode: "1234", player: "X" }
 - room_joined: { type: "room_joined", roomCode: "1234", player: "O" }
 - move_made: { type: "move_made", roomCode: "1234", board: ["X", "", ...], currentTurn: "O" }
 - game_over: { type: "game_over", roomCode: "1234", winner: "X" | "O" | "draw" }
+- opponent_left: { type: "opponent_left", message: "Opponent left" }
+- chat_message: { type: "chat_message", text: "Hi", senderId: "connection-id" }
+- typing_start: { type: "typing_start", senderId: "connection-id" }
+- typing_stop: { type: "typing_stop", senderId: "connection-id" }
 - error: { type: "error", message: "Room not found" }
 
 ---

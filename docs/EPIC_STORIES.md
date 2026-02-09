@@ -158,3 +158,57 @@ Acceptance:
 - Clicking Leave returns to home screen
 - Proper cleanup of room and player state
 - Can immediately create or join another room
+
+---
+
+## Epic 6: Real-Time Chat
+
+### Story 6.1: Floating chat UI
+As a player,
+I want a floating chat button that expands into a panel,
+So that I can chat without leaving the game.
+
+Acceptance:
+- Floating chat icon is visible during game
+- Tapping icon opens a chat panel (up to 3/4 screen)
+- Panel collapses back to floating icon
+- Unread/new messages visually highlight the icon
+
+---
+
+### Story 6.2: Real-time messaging
+As a player,
+I want to send messages in the room,
+So that I can communicate with my opponent.
+
+Acceptance:
+- Text + emojis supported
+- Messages appear in real time
+- My messages align right (blue)
+- Opponent messages align left (green)
+- Messages persist during game restart
+- Chat closes when room is left
+
+---
+
+### Story 6.3: Typing indicator
+As a player,
+I want to see when my opponent is typing,
+So that I know they are responding.
+
+Acceptance:
+- "Opponent is typing…" indicator
+- Indicator clears after inactivity
+
+---
+
+### Story 6.4: Limits & rate control
+As a developer,
+I want to prevent spam,
+So that chat remains usable.
+
+Acceptance:
+- Max 100 recent messages kept in memory
+- Rate limit: max 5 messages per 10 seconds per player
+- Reject empty messages
+- Enforce short message length (UI + server)

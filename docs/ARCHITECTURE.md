@@ -50,12 +50,18 @@ Key Features:
 - useWebSocket custom hook for connection management
 - useCallback optimization for all event handlers
 - Environment-based WebSocket URL configuration
+- Floating chat widget (expand/collapse)
+- Chat message alignment (mine/right, theirs/left)
+- Typing indicator UI
 
 Components:
 - App.jsx (main state & WebSocket logic)
 - HomeScreen (create/join UI)
 - GameBoard (game display)
 - Modal (reusable dialog)
+- ChatWidget (floating icon + panel)
+- ChatPanel (messages + input)
+- TypingIndicator (inline status)
 - useWebSocket hook
 
 ---
@@ -81,6 +87,8 @@ Key Features:
 - 5-minute inactivity cleanup
 - Role swapping on game restart
 - Proper opponent notification on leave/disconnect
+- In-memory chat history (last 100 messages)
+- Rate limiting (5 messages per 10 seconds)
 
 ---
 
@@ -97,7 +105,14 @@ Room:
   board: ["", "", "", "", "", "", "", "", ""],
   currentTurn: "X",
   status: "waiting" | "playing" | "finished",
-  lastActivityAt: timestamp
+  lastActivityAt: timestamp,
+  chatMessages: [
+    { id: "uuid", senderId: "connection-id", text: "Hi" }
+  ],
+  typing: {
+    X: false,
+    O: false
+  }
 }
 ```
 
@@ -123,6 +138,9 @@ Client → Server:
 - make_move
 - restart_game
 - leave_room
+- chat_message
+- typing_start
+- typing_stop
 
 Server → Client:
 - room_created
@@ -132,6 +150,9 @@ Server → Client:
 - restart_game
 - game_over
 - opponent_left
+- chat_message
+- typing_start
+- typing_stop
 - error
 
 ---
