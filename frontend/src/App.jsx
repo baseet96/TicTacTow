@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import HomeScreen from './components/HomeScreen'
 import GameBoard from './components/GameBoard'
+import { useWebSocket } from './hooks/useWebSocket'
 
 function App() {
   const [screen, setScreen] = useState('home') // 'home' or 'game'
@@ -10,25 +11,87 @@ function App() {
   const [currentTurn, setCurrentTurn] = useState('X')
   const [gameStatus, setGameStatus] = useState('waiting') // 'waiting', 'playing', 'win', 'draw'
 
+  const { send, on, isConnected } = useWebSocket('ws://localhost:3000')
+
+  useEffect(() => {
+    // Handle room_created event
+    on('room_created', (message) => {
+      setRoomCode(message.roomCode)
+      setPlayerSymbol(message.player)
+      setGameStatus('waiting')
+      setBoard(Array(9).fill(''))
+      setCurrentTurn('X')
+      setScreen('game')
+    })
+
+    // Handle room_joined event
+    on('room_joined', (message) => {
+      setRoomCode(message.roomCode)
+      setPlayerSymbol(message.player)
+      setGameStatus('playing')
+      setBoard(message.board)
+      setCurrentTurn(message.currentTurn)
+      setScreen('game')
+    })
+
+    // Handle game_started event (when second player joins)
+    on('game_started', (message) => {
+      setGameStatus('playing')
+      setBoard(message.board)
+      setCurrentTurn(message.currentTurn)
+    })
+
+    // Handle move_made event
+    on('move_made', (message) => {
+      setBoard(message.board)
+      setCurrentTurn(message.currentTurn)
+      setGameStatus('playing')
+    })
+
+    // Handle game_over event
+    on('game_over', (message) => {
+      setBoard(message.board)
+      if (message.winner === 'draw') {
+        setGameStatus('draw')
+      } else {
+        setGameStatus('win')
+        setCurrentTurn(message.winner)
+      }
+    })
+
+    // Handle error event
+    on('error', (message) => {
+      console.error('Server error:', message.message)
+      alert(message.message)
+    })
+
+    // Handle opponent_left event
+    on('opponent_left', (message) => {
+      alert(message.message)
+      // Reset to home screen
+      setScreen('home')
+      setRoomCode('')
+      setPlayerSymbol('')
+      setBoard(Array(9).fill(''))
+      setCurrentTurn('X')
+      setGameStatus('waiting')
+    })
+  }, [on])
+
   const handleCreateRoom = () => {
-    // TODO: WebSocket logic to create room
-    // Mock for now
-    const mockRoomCode = Math.floor(1000 + Math.random() * 9000).toString()
-    setRoomCode(mockRoomCode)
-    setPlayerSymbol('X')
-    setGameStatus('waiting')
-    setScreen('game')
-    console.log('Create room clicked:', mockRoomCode)
+    if (!isConnected) {
+      alert('Not connected to server')
+      return
+    }
+    send({ type: 'create_room' })
   }
 
   const handleJoinRoom = (code) => {
-    // TODO: WebSocket logic to join room
-    // Mock for now
-    setRoomCode(code)
-    setPlayerSymbol('O')
-    setGameStatus('playing')
-    setScreen('game')
-    console.log('Join room:', code)
+    if (!isConnected) {
+      alert('Not connected to server')
+      return
+    }
+    send({ type: 'join_room', roomCode: code })
   }
 
   const handleCellClick = (index) => {
@@ -36,15 +99,20 @@ function App() {
       return
     }
     
-    // TODO: Send move via WebSocket
-    const newBoard = [...board]
-    newBoard[index] = playerSymbol
-    setBoard(newBoard)
-    setCurrentTurn(currentTurn === 'X' ? 'O' : 'X')
-    console.log('Cell clicked:', index)
+    send({ 
+      type: 'make_move', 
+      roomCode: roomCode,
+      position: index 
+    })
   }
 
   const handleLeaveRoom = () => {
+    // Send leave message to server
+    send({ 
+      type: 'leave_room', 
+      roomCode: roomCode
+    })
+    
     // Reset game state
     setScreen('home')
     setRoomCode('')

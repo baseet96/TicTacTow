@@ -88,6 +88,33 @@ function deleteRoom(roomCode) {
 }
 
 /**
+ * Leave a room
+ * @param {string} roomCode
+ * @param {string} playerRole - 'X' or 'O'
+ * @returns {WebSocket|null} - The other player's socket connection if still in room
+ */
+function leaveRoom(roomCode, playerRole) {
+  const room = rooms[roomCode];
+
+  if (!room) {
+    return null;
+  }
+
+  // Get the other player before we delete
+  let otherPlayer = null;
+  if (playerRole === 'X' && room.players.O) {
+    otherPlayer = room.players.O;
+  } else if (playerRole === 'O' && room.players.X) {
+    otherPlayer = room.players.X;
+  }
+
+  // Delete room immediately when any player leaves
+  deleteRoom(roomCode);
+
+  return otherPlayer;
+}
+
+/**
  * Start cleanup interval for inactive rooms
  * @param {number} expiryMs - Milliseconds (default 5 min)
  */
@@ -108,6 +135,7 @@ module.exports = {
   createRoom,
   getRoom,
   joinRoom,
+  leaveRoom,
   updateActivity,
   deleteRoom,
   startCleanup,

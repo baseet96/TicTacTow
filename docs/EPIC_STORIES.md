@@ -71,21 +71,52 @@ Acceptance:
 
 ## Epic 4: Frontend UI
 
-### Story 4.1: Home screen
+### Story 4.1: Project setup
+As a developer,
+I want to setup React with Vite and Material UI,
+So that I can build the frontend.
+
+Acceptance:
+- React + Vite initialized
+- Material UI installed
+
+---
+
+### Story 4.2: Home screen
+As a player,
+I want a home screen with Create/Join options,
+So that I can start or join a game.
+
+Acceptance:
 - Create room button
-- Join room input
+- Join room input field
+- Clean UI with Material UI
 
 ---
 
-### Story 4.2: Game board UI
+### Story 4.3: Game board UI
+As a player,
+I want to see the game board,
+So that I can play the game.
+
+Acceptance:
 - Render 3x3 grid
-- Show player symbols
+- Show player symbols (X/O)
+- Display room code and turn status
+- Leave game button
 
 ---
 
-### Story 4.3: Real-time updates
-- Receive move updates
-- Update board instantly
+### Story 4.4: WebSocket integration
+As a player,
+I want real-time communication with the server,
+So that moves sync instantly.
+
+Acceptance:
+- Connect to WebSocket server
+- Send create_room, join_room, make_move messages
+- Receive and handle server updates
+- Update board in real-time
 
 ---
 

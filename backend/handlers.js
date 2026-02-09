@@ -82,6 +82,7 @@ function handleJoinRoom(ws, data, playerState) {
       roomCode: roomCode,
       player: "O",
       board: room.board,
+      currentTurn: room.currentTurn,
     })
   );
 
@@ -207,7 +208,7 @@ function handleMakeMove(ws, data, playerState) {
 /**
  * Route incoming message to correct handler
  */
-function handleMessage(ws, message, playerState) {
+function handleMessage(ws, message, playerState, playerStates) {
   try {
     const data = JSON.parse(message);
     console.log("Received:", data);
@@ -221,6 +222,9 @@ function handleMessage(ws, message, playerState) {
         break;
       case "make_move":
         handleMakeMove(ws, data, playerState);
+        break;
+      case "leave_room":
+        handleLeaveRoom(ws, data, playerState, playerStates);
         break;
       default:
         ws.send(
@@ -241,6 +245,72 @@ function handleMessage(ws, message, playerState) {
   }
 }
 
+/**
+ * Handle leave_room message
+ */
+function handleLeaveRoom(ws, data, playerState, playerStates) {
+  const roomCode = playerState.playerRoom;
+  const playerRole = playerState.playerRole;
+
+  if (!roomCode) {
+    return;
+  }
+
+  // Get the other player before room is deleted
+  const otherPlayer = roomManager.leaveRoom(roomCode, playerRole);
+
+  // Notify and clean up the other player
+  if (otherPlayer) {
+    otherPlayer.send(
+      JSON.stringify({
+        type: "opponent_left",
+        message: "Opponent left the game",
+      })
+    );
+    // Clear their playerState
+    const otherPlayerState = playerStates.get(otherPlayer);
+    if (otherPlayerState) {
+      otherPlayerState.playerRoom = null;
+      otherPlayerState.playerRole = null;
+    }
+  }
+
+  playerState.playerRoom = null;
+  playerState.playerRole = null;
+
+  console.log(`Player ${playerRole} left room ${roomCode}`);
+}
+
+/**
+ * Handle disconnect
+ */
+function handleDisconnect(playerState, playerStates) {
+  const roomCode = playerState.playerRoom;
+  const playerRole = playerState.playerRole;
+
+  if (roomCode && playerRole) {
+    // Get the other player before room is deleted
+    const otherPlayer = roomManager.leaveRoom(roomCode, playerRole);
+
+    // Notify and clean up the other player
+    if (otherPlayer) {
+      otherPlayer.send(
+        JSON.stringify({
+          type: "opponent_left",
+          message: "Opponent disconnected",
+        })
+      );
+      // Clear their playerState
+      const otherPlayerState = playerStates.get(otherPlayer);
+      if (otherPlayerState) {
+        otherPlayerState.playerRoom = null;
+        otherPlayerState.playerRole = null;
+      }
+    }
+  }
+}
+
 module.exports = {
   handleMessage,
+  handleDisconnect,
 };

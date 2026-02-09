@@ -3,7 +3,10 @@ const WebSocket = require("ws");
 const http = require("http");
 
 const roomManager = require("./roomManager");
-const { handleMessage } = require("./handlers");
+const { handleMessage, handleDisconnect } = require("./handlers");
+
+// Track WebSocket connections to player states
+const playerStates = new Map();
 
 const app = express();
 const server = http.createServer(app);
@@ -24,14 +27,19 @@ wss.on("connection", (ws) => {
     playerRole: null,
   };
 
+  // Track this connection
+  playerStates.set(ws, playerState);
+
   // Handle incoming messages
   ws.on("message", (message) => {
-    handleMessage(ws, message, playerState);
+    handleMessage(ws, message, playerState, playerStates);
   });
 
   // Handle client disconnect
   ws.on("close", () => {
     console.log("Client disconnected");
+    handleDisconnect(playerState, playerStates);
+    playerStates.delete(ws);
   });
 
   // Handle errors
