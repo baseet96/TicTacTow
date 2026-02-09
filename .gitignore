@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Personal tracking (not for version control)
+PROGRESS.md
+
+# Build outputs
+dist/
+build/
+*.tgz
+
+# Testing
+coverage/
+.nyc_output/
