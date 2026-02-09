@@ -52,7 +52,21 @@ function App() {
         title: 'Code: ' + message.roomCode,
         message: 'Waiting for opponent...',
         isError: false,
-        showClose: false
+        showClose: true,
+        confirmText: 'Leave',
+        onConfirm: () => {
+          send({ 
+            type: 'leave_room', 
+            roomCode: message.roomCode
+          })
+          setScreen('home')
+          setRoomCode('')
+          setPlayerSymbol('')
+          setBoard(Array(9).fill(''))
+          setCurrentTurn('X')
+          setGameStatus('waiting')
+          setModal(prev => ({ ...prev, open: false }))
+        }
       })
     })
 

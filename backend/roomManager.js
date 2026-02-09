@@ -1,6 +1,6 @@
 // Room management
 
-const rooms = {};
+const rooms = new Map();
 
 /**
  * Generate 4-digit room code
@@ -19,9 +19,9 @@ function createRoom(playerX) {
   let roomCode;
   do {
     roomCode = generateRoomCode();
-  } while (rooms[roomCode]);
+  } while (rooms.has(roomCode));
 
-  rooms[roomCode] = {
+  const room = {
     code: roomCode,
     players: {
       X: playerX,
@@ -33,6 +33,7 @@ function createRoom(playerX) {
     lastActivityAt: Date.now(),
   };
 
+  rooms.set(roomCode, room);
   return roomCode;
 }
 
@@ -42,7 +43,7 @@ function createRoom(playerX) {
  * @returns {object|null}
  */
 function getRoom(roomCode) {
-  return rooms[roomCode] || null;
+  return rooms.get(roomCode) || null;
 }
 
 /**
@@ -74,8 +75,9 @@ function joinRoom(roomCode, playerO) {
  * @param {string} roomCode
  */
 function updateActivity(roomCode) {
-  if (rooms[roomCode]) {
-    rooms[roomCode].lastActivityAt = Date.now();
+  const room = rooms.get(roomCode);
+  if (room) {
+    room.lastActivityAt = Date.now();
   }
 }
 
@@ -84,7 +86,7 @@ function updateActivity(roomCode) {
  * @param {string} roomCode
  */
 function deleteRoom(roomCode) {
-  delete rooms[roomCode];
+  rooms.delete(roomCode);
 }
 
 /**
@@ -94,7 +96,7 @@ function deleteRoom(roomCode) {
  * @returns {WebSocket|null} - The other player's socket connection if still in room
  */
 function leaveRoom(roomCode, playerRole) {
-  const room = rooms[roomCode];
+  const room = rooms.get(roomCode);
 
   if (!room) {
     return null;
@@ -121,8 +123,8 @@ function leaveRoom(roomCode, playerRole) {
 function startCleanup(expiryMs = 5 * 60 * 1000) {
   setInterval(() => {
     const now = Date.now();
-    for (const code in rooms) {
-      if (now - rooms[code].lastActivityAt > expiryMs) {
+    for (const [code, room] of rooms.entries()) {
+      if (now - room.lastActivityAt > expiryMs) {
         console.log(`Room ${code} expired due to inactivity`);
         deleteRoom(code);
       }
