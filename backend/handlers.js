@@ -139,8 +139,16 @@ function handleMakeMove(ws, data, playerState) {
     return;
   }
 
+  // Determine current player's role based on room mapping
+  let currentPlayerRole = "X";
+  if (room.players.X === ws) {
+    currentPlayerRole = "X";
+  } else if (room.players.O === ws) {
+    currentPlayerRole = "O";
+  }
+
   // Check if correct player's turn
-  if (room.currentTurn !== playerRole) {
+  if (room.currentTurn !== currentPlayerRole) {
     ws.send(
       JSON.stringify({
         type: "error",
@@ -151,12 +159,12 @@ function handleMakeMove(ws, data, playerState) {
   }
 
   // Make the move
-  room.board[position] = playerRole;
-  room.currentTurn = playerRole === "X" ? "O" : "X";
+  room.board[position] = currentPlayerRole;
+  room.currentTurn = currentPlayerRole === "X" ? "O" : "X";
   roomManager.updateActivity(playerRoom);
 
   // Check for win
-  const isWin = checkWin(room.board, playerRole);
+  const isWin = checkWin(room.board, currentPlayerRole);
 
   if (isWin) {
     room.status = "finished";
@@ -171,7 +179,7 @@ function handleMakeMove(ws, data, playerState) {
     room.players.X.send(gameOverMessage);
     room.players.O.send(gameOverMessage);
 
-    console.log(`Game over in room ${playerRoom}. Winner: ${playerRole}`);
+    console.log(`Game over in room ${playerRoom}. Winner: ${currentPlayerRole}`);
   } else if (checkDraw(room.board)) {
     room.status = "finished";
 
@@ -191,7 +199,7 @@ function handleMakeMove(ws, data, playerState) {
       type: "move_made",
       roomCode: playerRoom,
       position: position,
-      player: playerRole,
+      player: currentPlayerRole,
       board: room.board,
       currentTurn: room.currentTurn,
     });
@@ -200,7 +208,7 @@ function handleMakeMove(ws, data, playerState) {
     room.players.O.send(moveMessage);
 
     console.log(
-      `Move at position ${position} by ${playerRole} in room ${playerRoom}`
+      `Move at position ${position} by ${currentPlayerRole} in room ${playerRoom}`
     );
   }
 }
@@ -225,6 +233,9 @@ function handleMessage(ws, message, playerState, playerStates) {
         break;
       case "leave_room":
         handleLeaveRoom(ws, data, playerState, playerStates);
+        break;
+      case "restart_game":
+        handleRestartGame(ws, data, playerState);
         break;
       default:
         ws.send(
@@ -308,6 +319,60 @@ function handleDisconnect(playerState, playerStates) {
       }
     }
   }
+}
+
+/**
+ * Handle restart_game message
+ */
+function handleRestartGame(ws, data, playerState) {
+  const roomCode = playerState.playerRoom;
+  const room = roomManager.getRoom(roomCode);
+
+  if (!room) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: "Room not found",
+      })
+    );
+    return;
+  }
+
+  // Reset board and turn
+  room.board = ["", "", "", "", "", "", "", "", ""];
+  room.currentTurn = "X";
+  room.status = "playing";
+  roomManager.updateActivity(roomCode);
+
+  // Swap player roles
+  const tempX = room.players.X;
+  const tempO = room.players.O;
+  room.players.X = tempO;
+  room.players.O = tempX;
+
+  // Update playerState for current player
+  const newRole = room.players.X === ws ? "X" : "O";
+  playerState.playerRole = newRole;
+
+  // Notify both players with their new roles
+  const restartMessageX = {
+    type: "restart_game",
+    board: room.board,
+    currentTurn: "X",
+    player: "X",
+  };
+
+  const restartMessageO = {
+    type: "restart_game",
+    board: room.board,
+    currentTurn: "X",
+    player: "O",
+  };
+
+  room.players.X.send(JSON.stringify(restartMessageX));
+  room.players.O.send(JSON.stringify(restartMessageO));
+
+  console.log(`Game restarted in room ${roomCode} (players swapped)`);
 }
 
 module.exports = {

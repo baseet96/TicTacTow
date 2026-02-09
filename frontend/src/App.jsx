@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import HomeScreen from './components/HomeScreen'
 import GameBoard from './components/GameBoard'
+import Modal from './components/Modal'
 import { useWebSocket } from './hooks/useWebSocket'
 
 function App() {
@@ -11,7 +12,26 @@ function App() {
   const [currentTurn, setCurrentTurn] = useState('X')
   const [gameStatus, setGameStatus] = useState('waiting') // 'waiting', 'playing', 'win', 'draw'
 
+  // Modal state
+  const [modal, setModal] = useState({
+    open: false,
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    isError: false,
+    showClose: true,
+    onConfirm: null
+  })
+
   const { send, on, isConnected } = useWebSocket('ws://localhost:3000')
+
+  const handleRestartGame = () => {
+    send({ 
+      type: 'restart_game', 
+      roomCode: roomCode 
+    })
+    setModal({ ...modal, open: false })
+  }
 
   useEffect(() => {
     // Handle room_created event
@@ -22,6 +42,14 @@ function App() {
       setBoard(Array(9).fill(''))
       setCurrentTurn('X')
       setScreen('game')
+      // Show waiting modal
+      setModal({
+        open: true,
+        title: 'Code: ' + message.roomCode,
+        message: 'Waiting for opponent...',
+        isError: false,
+        showClose: false
+      })
     })
 
     // Handle room_joined event
@@ -36,6 +64,8 @@ function App() {
 
     // Handle game_started event (when second player joins)
     on('game_started', (message) => {
+      // Close the waiting modal
+      setModal({ ...modal, open: false })
       setGameStatus('playing')
       setBoard(message.board)
       setCurrentTurn(message.currentTurn)
@@ -48,39 +78,88 @@ function App() {
       setGameStatus('playing')
     })
 
+    // Handle restart_game event
+    on('restart_game', (message) => {
+      setBoard(message.board)
+      setPlayerSymbol(message.player)
+      setCurrentTurn('X')
+      setGameStatus('playing')
+      setModal({ ...modal, open: false })
+    })
+
     // Handle game_over event
     on('game_over', (message) => {
       setBoard(message.board)
+      const isYouWon = message.winner === playerSymbol
+      
       if (message.winner === 'draw') {
         setGameStatus('draw')
+        setModal({
+          open: true,
+          title: "It's a Draw!",
+          message: 'Well played',
+          confirmText: 'Play Again',
+          isError: false,
+          showClose: true,
+          onConfirm: handleRestartGame
+        })
       } else {
         setGameStatus('win')
         setCurrentTurn(message.winner)
+        setModal({
+          open: true,
+          title: isYouWon ? 'You Won!' : 'You Lost',
+          message: isYouWon ? 'Congrats! 🎉' : 'Better luck next time',
+          confirmText: 'Play Again',
+          isError: !isYouWon,
+          showClose: true,
+          onConfirm: handleRestartGame
+        })
       }
     })
 
     // Handle error event
     on('error', (message) => {
       console.error('Server error:', message.message)
-      alert(message.message)
+      setModal({
+        open: true,
+        title: 'Error',
+        message: message.message,
+        isError: true,
+        showClose: true
+      })
     })
 
     // Handle opponent_left event
     on('opponent_left', (message) => {
-      alert(message.message)
-      // Reset to home screen
-      setScreen('home')
-      setRoomCode('')
-      setPlayerSymbol('')
-      setBoard(Array(9).fill(''))
-      setCurrentTurn('X')
-      setGameStatus('waiting')
+      setModal({
+        open: true,
+        title: 'Opponent Left',
+        message: 'Game ended',
+        isError: true,
+        showClose: true
+      })
+      // Reset to home screen after modal closes
+      setTimeout(() => {
+        setScreen('home')
+        setRoomCode('')
+        setPlayerSymbol('')
+        setBoard(Array(9).fill(''))
+        setCurrentTurn('X')
+        setGameStatus('waiting')
+      }, 100)
     })
-  }, [on])
+  }, [on, playerSymbol, handleRestartGame])
 
   const handleCreateRoom = () => {
     if (!isConnected) {
-      alert('Not connected to server')
+      setModal({
+        open: true,
+        title: 'Not Connected',
+        message: 'Server is offline',
+        isError: true,
+        showClose: true
+      })
       return
     }
     send({ type: 'create_room' })
@@ -88,7 +167,13 @@ function App() {
 
   const handleJoinRoom = (code) => {
     if (!isConnected) {
-      alert('Not connected to server')
+      setModal({
+        open: true,
+        title: 'Not Connected',
+        message: 'Server is offline',
+        isError: true,
+        showClose: true
+      })
       return
     }
     send({ type: 'join_room', roomCode: code })
@@ -122,21 +207,51 @@ function App() {
     setGameStatus('waiting')
   }
 
+  const closeModal = () => {
+    setModal({ ...modal, open: false })
+  }
+
   if (screen === 'game') {
     return (
-      <GameBoard
-        roomCode={roomCode}
-        playerSymbol={playerSymbol}
-        board={board}
-        currentTurn={currentTurn}
-        gameStatus={gameStatus}
-        onCellClick={handleCellClick}
-        onLeaveRoom={handleLeaveRoom}
-      />
+      <>
+        <GameBoard
+          roomCode={roomCode}
+          playerSymbol={playerSymbol}
+          board={board}
+          currentTurn={currentTurn}
+          gameStatus={gameStatus}
+          onCellClick={handleCellClick}
+          onLeaveRoom={handleLeaveRoom}
+        />
+        <Modal
+          open={modal.open}
+          title={modal.title}
+          message={modal.message}
+          confirmText={modal.confirmText}
+          onClose={closeModal}
+          onConfirm={modal.onConfirm || closeModal}
+          isError={modal.isError}
+          showClose={modal.showClose}
+        />
+      </>
     )
   }
 
-  return <HomeScreen onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />
+  return (
+    <>
+      <HomeScreen onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} />
+      <Modal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        confirmText={modal.confirmText}
+        onClose={closeModal}
+        onConfirm={modal.onConfirm || closeModal}
+        isError={modal.isError}
+        showClose={modal.showClose}
+      />
+    </>
+  )
 }
 
 export default App
