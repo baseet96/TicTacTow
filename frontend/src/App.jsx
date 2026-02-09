@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import HomeScreen from './components/HomeScreen'
 import GameBoard from './components/GameBoard'
 import Modal from './components/Modal'
@@ -23,15 +23,19 @@ function App() {
     onConfirm: null
   })
 
-  const { send, on, isConnected } = useWebSocket('ws://localhost:3000')
+  const { send, on, isConnected } = useWebSocket(import.meta.env.VITE_WS_URL)
 
-  const handleRestartGame = () => {
+  const closeModal = useCallback(() => {
+    setModal(prev => ({ ...prev, open: false }))
+  }, [])
+
+  const handleRestartGame = useCallback(() => {
     send({ 
       type: 'restart_game', 
       roomCode: roomCode 
     })
-    setModal({ ...modal, open: false })
-  }
+    setModal(prev => ({ ...prev, open: false }))
+  }, [send, roomCode])
 
   useEffect(() => {
     // Handle room_created event
@@ -132,26 +136,27 @@ function App() {
 
     // Handle opponent_left event
     on('opponent_left', (message) => {
+      console.log('Opponent left event received:', message)
       setModal({
         open: true,
         title: 'Opponent Left',
         message: 'Game ended',
         isError: true,
-        showClose: true
+        showClose: true,
+        onConfirm: () => {
+          setScreen('home')
+          setRoomCode('')
+          setPlayerSymbol('')
+          setBoard(Array(9).fill(''))
+          setCurrentTurn('X')
+          setGameStatus('waiting')
+          setModal(prev => ({ ...prev, open: false }))
+        }
       })
-      // Reset to home screen after modal closes
-      setTimeout(() => {
-        setScreen('home')
-        setRoomCode('')
-        setPlayerSymbol('')
-        setBoard(Array(9).fill(''))
-        setCurrentTurn('X')
-        setGameStatus('waiting')
-      }, 100)
     })
   }, [on, playerSymbol, handleRestartGame])
 
-  const handleCreateRoom = () => {
+  const handleCreateRoom = useCallback(() => {
     if (!isConnected) {
       setModal({
         open: true,
@@ -163,9 +168,9 @@ function App() {
       return
     }
     send({ type: 'create_room' })
-  }
+  }, [isConnected, send])
 
-  const handleJoinRoom = (code) => {
+  const handleJoinRoom = useCallback((code) => {
     if (!isConnected) {
       setModal({
         open: true,
@@ -177,9 +182,9 @@ function App() {
       return
     }
     send({ type: 'join_room', roomCode: code })
-  }
+  }, [isConnected, send])
 
-  const handleCellClick = (index) => {
+  const handleCellClick = useCallback((index) => {
     if (board[index] || gameStatus !== 'playing' || currentTurn !== playerSymbol) {
       return
     }
@@ -189,10 +194,9 @@ function App() {
       roomCode: roomCode,
       position: index 
     })
-  }
+  }, [board, gameStatus, currentTurn, playerSymbol, send, roomCode])
 
-  const handleLeaveRoom = () => {
-    // Send leave message to server
+  const handleLeaveRoom = useCallback(() => {
     send({ 
       type: 'leave_room', 
       roomCode: roomCode
@@ -205,11 +209,7 @@ function App() {
     setBoard(Array(9).fill(''))
     setCurrentTurn('X')
     setGameStatus('waiting')
-  }
-
-  const closeModal = () => {
-    setModal({ ...modal, open: false })
-  }
+  }, [send, roomCode])
 
   if (screen === 'game') {
     return (
