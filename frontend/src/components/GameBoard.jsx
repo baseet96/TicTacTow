@@ -25,18 +25,15 @@ function GameBoard({
           bgcolor: value ? 'action.selected' : 'background.paper',
           '&:hover': {
             bgcolor: value ? 'action.selected' : 'action.hover',
-          },
-          transition: 'all 0.2s'
+          }
         }}
         onClick={() => !value && onCellClick(index)}
       >
         <Typography
           variant="h2"
-          sx={{
-            fontWeight: 'bold',
-            color: value === 'X' ? 'primary.main' : 'secondary.main',
-            userSelect: 'none'
-          }}
+          fontWeight="bold"
+          color={value === 'X' ? 'primary' : 'secondary'}
+          sx={{ userSelect: 'none' }}
         >
           {value}
         </Typography>
@@ -87,11 +84,11 @@ function GameBoard({
         <Paper elevation={1} sx={{ px: 3, py: 1.5, width: '100%' }}>
           <Typography
             variant="h6"
-            textAlign="center"
+            align="center"
             color={
-              gameStatus === 'win' ? 'success.main' :
-              gameStatus === 'draw' ? 'warning.main' :
-              currentTurn === playerSymbol ? 'primary.main' : 'text.secondary'
+              gameStatus === 'win' ? 'success' :
+              gameStatus === 'draw' ? 'warning' :
+              currentTurn === playerSymbol ? 'primary' : 'text.secondary'
             }
           >
             {getStatusMessage()}

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Container, Box, TextField, Button, Typography, Paper } from '@mui/material'
+import { Container, Box, TextField, Button, Typography, Paper, Divider } from '@mui/material'
 
 function HomeScreen({ onCreateRoom, onJoinRoom }) {
   const [roomCode, setRoomCode] = useState('')
@@ -46,13 +46,11 @@ function HomeScreen({ onCreateRoom, onJoinRoom }) {
             </Button>
 
             {/* Divider */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
+            <Divider sx={{ my: 1 }}>
               <Typography variant="body2" color="text.secondary">
                 OR
               </Typography>
-              <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
-            </Box>
+            </Divider>
 
             {/* Join Room */}
             <Box>
@@ -63,11 +61,15 @@ function HomeScreen({ onCreateRoom, onJoinRoom }) {
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.slice(0, 4))}
                 onKeyPress={handleKeyPress}
-                inputProps={{ 
-                  maxLength: 4,
-                  style: { textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem' }
+                inputProps={{ maxLength: 4 }}
+                sx={{ 
+                  mb: 2,
+                  '& input': { 
+                    textAlign: 'center', 
+                    fontSize: '1.5rem', 
+                    letterSpacing: '0.5rem' 
+                  }
                 }}
-                sx={{ mb: 2 }}
               />
               <Button
                 variant="outlined"
