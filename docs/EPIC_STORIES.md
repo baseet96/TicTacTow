@@ -123,12 +123,38 @@ Acceptance:
 ## Epic 5: Game Controls
 
 ### Story 5.1: Restart game
+As a player,
+I want to play again without creating a new room,
+So that I can continue with the same opponent.
+
 Acceptance:
 - Board resets
-- Same players continue
+- Turn resets to X
+- Player roles swap (X becomes O, O becomes X)
+- Both players see the updated state
 
 ---
 
 ### Story 5.2: Handle disconnect
+As a player,
+I want to know when my opponent leaves,
+So that I understand why the game ended.
+
 Acceptance:
-- Show message if player leaves
+- Show "Opponent Left" modal when player disconnects
+- Modal requires acknowledgment (can't auto-dismiss)
+- Clicking OK returns to home screen
+- Player can create/join new room
+
+---
+
+### Story 5.3: Leave waiting room
+As a player creating a room,
+I want to cancel and join a different room,
+So that I have flexibility in room selection.
+
+Acceptance:
+- Leave button in waiting modal
+- Clicking Leave returns to home screen
+- Proper cleanup of room and player state
+- Can immediately create or join another room
