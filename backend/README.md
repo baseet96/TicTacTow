@@ -16,6 +16,40 @@ npm start
 
 Server runs on `http://localhost:3000`
 
+## Docker
+
+### Build
+
+```bash
+docker build -t tictactoe-backend .
+```
+
+### Run
+
+```bash
+docker run --rm -p 3000:3000 tictactoe-backend
+```
+
+## Deployment
+
+### CI/CD Pipeline
+Push to `main` branch with changes in `backend/` triggers GitHub Actions to:
+1. Build Docker image
+2. Push to ECR: `projects/tictactoe:latest`
+3. SSH to Lightsail instance
+4. Pull latest image
+5. Stop old container and start new one
+6. Restart nginx
+
+### GitHub Secrets Required
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `AWS_ACCOUNT_ID`
+- `LIGHTSAIL_HOST` (IP address)
+- `LIGHTSAIL_USER` (e.g., ubuntu)
+- `LIGHTSAIL_SSH_KEY` (private key content)
+
 ## Features ✅
 
 ### Room System (Epic 1, 2)
