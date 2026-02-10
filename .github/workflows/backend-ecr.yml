@@ -50,14 +50,18 @@ jobs:
           echo "$LIGHTSAIL_SSH_KEY" > private_key.pem
           chmod 600 private_key.pem
           
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $LIGHTSAIL_USER@$LIGHTSAIL_HOST << 'EOF'
+          # Test SSH connection
+          ssh -o StrictHostKeyChecking=no -i private_key.pem -T $LIGHTSAIL_USER@$LIGHTSAIL_HOST "echo 'SSH connection successful'" || { echo "SSH connection failed"; rm -f private_key.pem; exit 1; }
+          
+          # Deploy
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $LIGHTSAIL_USER@$LIGHTSAIL_HOST << 'ENDSSH'
             set -e
             
             echo "🔐 Logging into ECR..."
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+            aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin '"$AWS_ACCOUNT_ID"'.dkr.ecr.'"$AWS_REGION"'.amazonaws.com
             
             echo "🐳 Pulling latest image..."
-            docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/projects/tictactoe:latest
+            docker pull '"$AWS_ACCOUNT_ID"'.dkr.ecr.'"$AWS_REGION"'.amazonaws.com/projects/tictactoe:latest
             
             echo "🛑 Stopping old container..."
             docker stop tictactoe-backend 2>/dev/null || true
@@ -68,7 +72,7 @@ jobs:
               --name tictactoe-backend \
               --restart unless-stopped \
               -p 3000:3000 \
-              $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/projects/tictactoe:latest
+              '"$AWS_ACCOUNT_ID"'.dkr.ecr.'"$AWS_REGION"'.amazonaws.com/projects/tictactoe:latest
             
             echo "🧹 Cleaning up old images..."
             docker image prune -f
@@ -78,6 +82,6 @@ jobs:
             
             echo "✅ Deployment complete!"
             docker ps | grep tictactoe-backend
-          EOF
+          ENDSSH
           
           rm -f private_key.pem
