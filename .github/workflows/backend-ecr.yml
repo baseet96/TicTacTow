@@ -54,9 +54,16 @@ jobs:
           # Test SSH connection
           ssh -o StrictHostKeyChecking=no -i private_key.pem -T $LIGHTSAIL_USER@$LIGHTSAIL_HOST "echo 'SSH connection successful'" || { echo "SSH connection failed"; rm -f private_key.pem; exit 1; }
           
-          # Deploy (pull image - ECR auth already done by GitHub)
+          # Deploy (pass ECR credentials from GitHub to Lightsail)
           ssh -o StrictHostKeyChecking=no -i private_key.pem $LIGHTSAIL_USER@$LIGHTSAIL_HOST "
             set -e
+            
+            # Get temporary ECR credentials from GitHub's already-authenticated session
+            export AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID
+            export AWS_REGION=$AWS_REGION
+            
+            echo '🔐 Logging into ECR with temporary credentials...'
+            aws ecr get-login-password --region \$AWS_REGION | docker login --username AWS --password-stdin \$AWS_ACCOUNT_ID.dkr.ecr.\$AWS_REGION.amazonaws.com
             
             echo '🐳 Pulling latest image from ECR...'
             docker pull $ECR_IMAGE_URI
