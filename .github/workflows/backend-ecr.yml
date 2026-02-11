@@ -82,9 +82,6 @@ jobs:
             echo '🧹 Cleaning up old images...'
             docker image prune -f
             
-            echo '🔄 Restarting nginx...'
-            sudo systemctl restart nginx
-            
             echo '✅ Deployment complete!'
             docker ps | grep tictactoe-backend
           "
