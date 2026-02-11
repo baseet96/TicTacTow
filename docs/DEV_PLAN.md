@@ -77,6 +77,68 @@ npm install
 27. Message retention (last 100)
 28. Chat state persistence through restart
 
+### Phase 6: Containerization ✅
+29. Create Dockerfile for backend ✅
+30. Test Docker build locally ✅
+31. Create .dockerignore ✅
+
+### Phase 7: CI/CD Pipeline ✅
+32. Create GitHub Actions workflow ✅
+33. Setup ECR repository ✅
+34. Configure GitHub secrets (AWS credentials) ✅
+35. Test image build and push ✅
+
+### Phase 8: Deployment ✅
+36. Setup Lightsail instance ✅
+37. Configure DNS (Route 53) ✅
+38. Get SSL certificate (Let's Encrypt) ✅
+39. Setup Nginx reverse proxy ✅
+40. Deploy container via SSH from GitHub Actions ✅
+41. Test end-to-end deployment ✅
+
+---
+
+## 5. Infrastructure Setup (Completed)
+
+### Docker
+- Dockerfile: Node.js 20 Alpine, npm ci, port 3000
+- .dockerignore: Excludes node_modules, logs, etc.
+
+### CI/CD (GitHub Actions)
+- Workflow: .github/workflows/backend-ecr.yml
+- Trigger: Push to main with backend/** changes
+- Builds Docker image, pushes to ECR, deploys via SSH
+
+### AWS
+- ECR: projects/tictactoe (image registry)
+- Lightsail: t2.micro instance, Static IP
+- Route 53: DNS for api.tictactoe.basitzahid.com
+
+### SSL/TLS
+- Certificate: Let's Encrypt (free)
+- Domain: api.tictactoe.basitzahid.com
+- Renewal: Automatic (Certbot)
+
+### Nginx
+- Reverse proxy on port 443 (HTTPS)
+- Redirects HTTP (80) to HTTPS
+- Proxies to Docker container on localhost:3000
+- WebSocket support (Upgrade headers)
+
+### Phase 7: CI/CD Pipeline ✅
+32. Create GitHub Actions workflow ✅
+33. Setup ECR repository ✅
+34. Configure GitHub secrets (AWS credentials) ✅
+35. Test image build and push ✅
+
+### Phase 8: Deployment ✅
+36. Setup Lightsail instance ✅
+37. Configure DNS (Route 53) ✅
+38. Get SSL certificate (Let's Encrypt) ✅
+39. Setup Nginx reverse proxy ✅
+40. Deploy container via SSH from GitHub Actions ✅
+41. Test end-to-end deployment ✅
+
 ---
 
 ## 5. Testing (Completed)

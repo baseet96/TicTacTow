@@ -26,7 +26,20 @@ Backend:
 - ws (WebSocket library)
 
 Hosting:
-- Local or single VPS
+- AWS Lightsail (backend)
+- AWS Amplify (frontend)
+- AWS ECR (container registry)
+
+---
+
+### 2.1 Deployment Stack
+
+CI/CD:
+- GitHub Actions (automated builds & deployments)
+- AWS ECR (container registry)
+- Docker (containerization)
+- Nginx (reverse proxy)
+- Let's Encrypt (SSL/TLS)
 
 ---
 
@@ -92,6 +105,37 @@ Key Features:
 
 ---
 
+### 3.3 Deployment Infrastructure
+
+**Docker Container:**
+- Base: Node.js 20 Alpine
+- Port: 3000 (internal)
+- Restart: unless-stopped (persistent)
+- Image: AWS ECR (projects/tictactoe:latest)
+
+**Nginx Reverse Proxy:**
+- Listen: Port 443 (HTTPS)
+- Redirect: Port 80 → 443
+- Proxy: localhost:3000
+- WebSocket: Upgrade headers configured
+- SSL: Let's Encrypt certificate
+
+**GitHub Actions Workflow:**
+- File: .github/workflows/backend-ecr.yml
+- Trigger: Push to main (backend/** changes)
+- Steps:
+  1. Checkout code
+  2. Configure AWS credentials
+  3. Login to ECR
+  4. Build Docker image
+  5. Push to ECR
+  6. SSH to Lightsail
+  7. Pull latest image
+  8. Stop old container, start new one
+  9. Clean up old images
+
+---
+
 ### 4. Data Model
 
 Room:
@@ -130,7 +174,45 @@ Room cleanup:
 
 ---
 
-### 5. WebSocket Events
+### 6. Infrastructure Flow
+
+**Development → Production:**
+```
+Local Machine (Developer)
+    ↓
+git push to main (backend changes)
+    ↓
+GitHub Actions
+  ├─ Build Docker image
+  ├─ Push to ECR: projects/tictactoe:latest
+  └─ Trigger deployment
+    ↓
+Lightsail Instance
+  ├─ SSH connection
+  ├─ Pull from ECR
+  ├─ Stop old container
+  ├─ Start new container
+  └─ Container running on 3000
+    ↓
+Nginx (port 443)
+  ├─ SSL/TLS termination
+  ├─ WebSocket upgrade
+  └─ Proxy to 3000
+    ↓
+Users
+  ├─ Frontend (Amplify): tictactoe domain
+  ├─8Backend (Lightsail): wss://api.tictactoe.basitzahid.com
+  └─ Real-time multiplayer game
+```
+
+**URL Structure:**
+- Frontend: https://tictactoe.basitzahid.com (Amplify)
+- Backend WebSocket: wss://api.tictactoe.basitzahid.com (Lightsail)
+- SSL Certificate: Let's Encrypt (auto-renewing)
+
+---
+
+### 7. WebSocket Events
 
 Client → Server:
 - create_room
