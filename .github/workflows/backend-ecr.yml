@@ -54,34 +54,38 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key.pem -T $LIGHTSAIL_USER@$LIGHTSAIL_HOST "echo 'SSH connection successful'" || { echo "SSH connection failed"; rm -f private_key.pem; exit 1; }
           
           # Deploy
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $LIGHTSAIL_USER@$LIGHTSAIL_HOST << 'ENDSSH'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $LIGHTSAIL_USER@$LIGHTSAIL_HOST "
             set -e
+            export AWS_REGION=$AWS_REGION
+            export AWS_ACCOUNT_ID=$AWS_ACCOUNT_ID
             
-            echo "🔐 Logging into ECR..."
-            aws ecr get-login-password --region '"$AWS_REGION"' | docker login --username AWS --password-stdin '"$AWS_ACCOUNT_ID"'.dkr.ecr.'"$AWS_REGION"'.amazonaws.com
+            echo '🔐 Logging into ECR...'
+            aws ecr get-login-password --region \$AWS_REGION | docker login --username AWS --password-stdin \$AWS_ACCOUNT_ID.dkr.ecr.\$AWS_REGION.amazonaws.com
             
-            echo "🐳 Pulling latest image..."
-            docker pull '"$AWS_ACCOUNT_ID"'.dkr.ecr.'"$AWS_REGION"'.amazonaws.com/projects/tictactoe:latest
+            echo '🐳 Pulling latest image...'
+            docker pull \$AWS_ACCOUNT_ID.dkr.ecr.\$AWS_REGION.amazonaws.com/projects/tictactoe:latest
             
-            echo "🛑 Stopping old container..."
+            echo '🛑 Stopping old container...'
             docker stop tictactoe-backend 2>/dev/null || true
             docker rm tictactoe-backend 2>/dev/null || true
             
-            echo "🚀 Starting new container..."
+            echo '🚀 Starting new container...'
             docker run -d \
               --name tictactoe-backend \
               --restart unless-stopped \
               -p 3000:3000 \
-              '"$AWS_ACCOUNT_ID"'.dkr.ecr.'"$AWS_REGION"'.amazonaws.com/projects/tictactoe:latest
+              \$AWS_ACCOUNT_ID.dkr.ecr.\$AWS_REGION.amazonaws.com/projects/tictactoe:latest
             
-            echo "🧹 Cleaning up old images..."
+            echo '🧹 Cleaning up old images...'
             docker image prune -f
             
-            echo "🔄 Restarting nginx..."
+            echo '🔄 Restarting nginx...'
             sudo systemctl restart nginx
             
-            echo "✅ Deployment complete!"
+            echo '✅ Deployment complete!'
             docker ps | grep tictactoe-backend
-          ENDSSH
+          "
+          
+          rm -f private_key.pem
           
           rm -f private_key.pem
